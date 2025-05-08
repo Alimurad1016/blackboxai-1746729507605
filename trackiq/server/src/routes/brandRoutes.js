@@ -5,59 +5,21 @@ const {
   getBrand,
   createBrand,
   updateBrand,
-  deleteBrand,
-  getBrandStats
+  deleteBrand
 } = require('../controllers/brandController');
-const {
-  protect,
-  checkPermission
-} = require('../middleware/authMiddleware');
-const {
-  brandValidation,
-  queryValidation
-} = require('../middleware/validationMiddleware');
+const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Protect all routes
 router.use(protect);
 
-// Routes with pagination
-router.get(
-  '/',
-  queryValidation.pagination,
-  checkPermission('brands', 'view'),
-  getBrands
-);
-
-// Individual routes
 router
   .route('/')
-  .post(
-    checkPermission('brands', 'create'),
-    brandValidation.create,
-    createBrand
-  );
+  .get(getBrands)
+  .post(authorize('admin'), createBrand);
 
 router
   .route('/:id')
-  .get(
-    checkPermission('brands', 'view'),
-    getBrand
-  )
-  .put(
-    checkPermission('brands', 'edit'),
-    brandValidation.update,
-    updateBrand
-  )
-  .delete(
-    checkPermission('brands', 'delete'),
-    deleteBrand
-  );
-
-// Statistics route
-router.get(
-  '/:id/stats',
-  checkPermission('brands', 'view'),
-  getBrandStats
-);
+  .get(getBrand)
+  .put(authorize('admin'), updateBrand)
+  .delete(authorize('admin'), deleteBrand);
 
 module.exports = router;
