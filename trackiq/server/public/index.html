@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackIQ API Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold text-gray-900 mb-8">TrackIQ API Test</h1>
+            
+            <!-- API Health Check -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">API Health Check</h2>
+                <button onclick="checkHealth()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">
+                    Check Health
+                </button>
+                <pre id="healthResult" class="mt-4 bg-gray-100 p-4 rounded overflow-x-auto"></pre>
+            </div>
+
+            <!-- Authentication -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Authentication</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="email" class="w-full px-3 py-2 border rounded-md" value="admin@trackiq.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="password" class="w-full px-3 py-2 border rounded-md" value="Admin@123">
+                    </div>
+                    <button onclick="login()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+                        Login
+                    </button>
+                </div>
+                <pre id="authResult" class="mt-4 bg-gray-100 p-4 rounded overflow-x-auto"></pre>
+            </div>
+
+            <!-- Brands API -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Brands API</h2>
+                <div class="space-y-4">
+                    <button onclick="getBrands()" class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600 transition-colors">
+                        Get Brands
+                    </button>
+                    <button onclick="createBrand()" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 transition-colors">
+                        Create Test Brand
+                    </button>
+                </div>
+                <pre id="brandsResult" class="mt-4 bg-gray-100 p-4 rounded overflow-x-auto"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = '';
+        const API_BASE_URL = 'http://localhost:5000/api/v1';
+
+        async function displayResult(elementId, data) {
+            document.getElementById(elementId).textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+                displayResult('healthResult', data);
+            } catch (error) {
+                displayResult('healthResult', { error: error.message });
+            }
+        }
+
+        async function login() {
+            try {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                if (data.token) {
+                    authToken = data.token;
+                }
+                displayResult('authResult', data);
+            } catch (error) {
+                displayResult('authResult', { error: error.message });
+            }
+        }
+
+        async function getBrands() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/brands`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                const data = await response.json();
+                displayResult('brandsResult', data);
+            } catch (error) {
+                displayResult('brandsResult', { error: error.message });
+            }
+        }
+
+        async function createBrand() {
+            try {
+                const testBrand = {
+                    name: 'Test Brand',
+                    code: 'TEST-' + Date.now(),
+                    description: 'Test brand created from API test page',
+                    status: 'active',
+                    contactPerson: {
+                        name: 'Test Contact',
+                        email: 'test@example.com',
+                        phone: '+1-555-0000'
+                    }
+                };
+
+                const response = await fetch(`${API_BASE_URL}/brands`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(testBrand)
+                });
+                
+                const data = await response.json();
+                displayResult('brandsResult', data);
+            } catch (error) {
+                displayResult('brandsResult', { error: error.message });
+            }
+        }
+    </script>
+</body>
+</html>
